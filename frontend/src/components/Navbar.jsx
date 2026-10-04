@@ -69,6 +69,9 @@ export default function Navbar() {
           <Link href="/analyze" style={pathname === '/analyze' ? { color: 'var(--text-primary)' } : {}}>
             Analyze
           </Link>
+          <Link href="/history" style={pathname === '/history' ? { color: 'var(--text-primary)', marginLeft: '12px' } : { marginLeft: '12px' }}>
+            History
+          </Link>
 
           <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)', margin: '0 8px' }}></div>
           

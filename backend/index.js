@@ -280,6 +280,24 @@ app.post("/api/analyze", aiLimiter, async (req, res) => {
   }
 });
 
+// GET /api/history - Fetch past analysis results
+app.get("/api/history", async (req, res) => {
+  try {
+    if (!supabase) throw new Error("Supabase is not configured");
+    const { data, error } = await supabase
+      .from('candidates')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+      
+    if (error) throw error;
+    res.json({ success: true, history: data });
+  } catch (error) {
+    console.error("History fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch history" });
+  }
+});
+
 // POST /api/analyze/single - Analyze a single resume
 app.post("/api/analyze/single", aiLimiter, async (req, res) => {
   try {
