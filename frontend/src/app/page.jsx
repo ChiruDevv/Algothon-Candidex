@@ -108,7 +108,7 @@ export default function LandingPage() {
 
           <div className="hero-stats">
             <div className="hero-stat">
-              <div className="hero-stat-value">50+</div>
+              <div className="hero-stat-value">Up to 50</div>
               <div className="hero-stat-label">Resumes at Once</div>
             </div>
             <div className="hero-stat">
@@ -118,10 +118,6 @@ export default function LandingPage() {
             <div className="hero-stat">
               <div className="hero-stat-value">AI</div>
               <div className="hero-stat-label">Claim Verification</div>
-            </div>
-            <div className="hero-stat">
-              <div className="hero-stat-value">&lt;30s</div>
-              <div className="hero-stat-label">Per Analysis</div>
             </div>
           </div>
         </div>
