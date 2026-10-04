@@ -17,11 +17,40 @@ export default function AnalyzePage() {
   const [files, setFiles] = useState([])
   const [jobTitle, setJobTitle] = useState('')
   const [jobDescription, setJobDescription] = useState('')
+  const [jobUrl, setJobUrl] = useState('')
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('')
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [error, setError] = useState('')
+
+  const handleFetchJob = async () => {
+    if (!jobUrl) return;
+    setIsFetchingUrl(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/scrape-job`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: jobUrl })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch job details');
+      }
+      
+      if (data.jobTitle) setJobTitle(data.jobTitle);
+      if (data.jobDescription) setJobDescription(data.jobDescription);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsFetchingUrl(false);
+    }
+  }
 
   // Extract text from file (PDF or DOCX)
   const extractTextFromFile = async (file) => {
@@ -382,6 +411,28 @@ export default function AnalyzePage() {
             <div>
               <div className="card">
                 <div className="jd-input-container">
+                  <label>🔗 Auto-Fetch Job Details (Optional)</label>
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    <input
+                      type="url"
+                      className="job-title-input"
+                      style={{ flex: 1, marginBottom: 0 }}
+                      placeholder="Paste LinkedIn or job board URL..."
+                      value={jobUrl}
+                      onChange={(e) => setJobUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleFetchJob()}
+                    />
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={handleFetchJob}
+                      disabled={isFetchingUrl || !jobUrl}
+                    >
+                      {isFetchingUrl ? 'Fetching...' : 'Fetch'}
+                    </button>
+                  </div>
+
+                  <div style={{ width: '100%', height: '1px', background: 'var(--border-subtle)', marginBottom: '16px' }}></div>
+
                   <label>💼 Job Title</label>
                   <input
                     type="text"

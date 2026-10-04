@@ -7,6 +7,8 @@ const rateLimit = require("express-rate-limit");
 const { z } = require("zod");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require("./supabase");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
 dotenv.config();
 
@@ -280,6 +282,77 @@ app.post("/api/analyze", aiLimiter, async (req, res) => {
         ? "An error occurred during analysis."
         : error.message,
     });
+  }
+});
+
+const scrapeSchema = z.object({
+  url: z.string().url(),
+});
+
+// POST /api/scrape-job - Scrape a job posting URL and extract details
+app.post("/api/scrape-job", aiLimiter, async (req, res) => {
+  try {
+    const { url } = scrapeSchema.parse(req.body);
+    
+    // Fetch raw HTML
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+      },
+      timeout: 10000
+    });
+    
+    const html = response.data;
+    const $ = cheerio.load(html);
+    
+    // Attempt basic extraction to reduce token usage
+    $('script, style, noscript, nav, footer, header').remove();
+    let textContent = $('body').text().replace(/\s+/g, ' ').trim();
+    
+    // If it's a huge page, trim it down
+    if (textContent.length > 15000) {
+      textContent = textContent.substring(0, 15000);
+    }
+    
+    // Pass to Gemini to format it beautifully
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
+    const prompt = `You are an AI assistant helping a recruiter extract job details from a raw webpage scrape.
+    I scraped a job posting URL and got this raw text. 
+    Please extract the exact Job Title and the full, detailed Job Description.
+    
+    Raw Text:
+    ${textContent}
+    
+    Return ONLY a valid JSON object matching this structure (no markdown, no quotes):
+    {
+      "jobTitle": "Extracted Job Title",
+      "jobDescription": "Full extracted job description. Format nicely with bullet points if possible. Make sure to include requirements and responsibilities."
+    }`;
+
+    const aiResult = await model.generateContent(prompt);
+    let aiText = aiResult.response.text();
+    
+    let jsonMatch = aiText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) aiText = jsonMatch[1];
+    const directMatch = aiText.match(/\{[\s\S]*\}/);
+    if (directMatch) aiText = directMatch[0];
+
+    const parsed = JSON.parse(aiText);
+    
+    res.json({
+      success: true,
+      jobTitle: parsed.jobTitle || "",
+      jobDescription: parsed.jobDescription || ""
+    });
+
+  } catch (error) {
+    console.error("Scrape error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid URL" });
+    }
+    res.status(500).json({ error: "Failed to fetch or parse the job URL. Some sites block automated requests." });
   }
 });
 
