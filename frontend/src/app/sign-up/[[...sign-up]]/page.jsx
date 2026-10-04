@@ -39,7 +39,7 @@ export default function SignUp() {
             },
           }}
           providers={[]}
-          redirectTo={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/`}
+          redirectTo="https://candidex-algothon.vercel.app/"
           view="sign_up"
         />
       </div>

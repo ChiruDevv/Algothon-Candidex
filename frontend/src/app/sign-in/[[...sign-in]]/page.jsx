@@ -39,7 +39,7 @@ export default function SignIn() {
             },
           }}
           providers={[]}
-          redirectTo={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/update-password`}
+          redirectTo="https://candidex-algothon.vercel.app/update-password"
           view="sign_in"
         />
       </div>
