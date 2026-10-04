@@ -149,7 +149,8 @@ You must return a valid JSON object (no markdown, no code blocks, just raw JSON)
 }
 
 IMPORTANT INSTRUCTIONS:
-- Extract the candidate's name from the resume if possible
+- GDPR COMPLIANCE: Scrub all Personally Identifiable Information (PII) including real names, emails, phone numbers, and addresses from your entire response.
+- Set the "candidateName" field strictly to "Anonymous Candidate" (do NOT use their real name).
 - Be very critical and accurate with scoring
 - For claimVerification, look for: contradictory timelines, vague/unquantified claims, impossibly high metrics, skill claims without evidence, degree/certification claims that seem off
 - Generate interview questions that would verify the candidate's actual knowledge
@@ -234,12 +235,14 @@ app.post("/api/analyze", aiLimiter, async (req, res) => {
     if (supabase && results.length > 0) {
       try {
         const { error: dbError } = await supabase.from('candidates').insert(
-          results.map(r => ({
-            job_title: jobTitle || "Untitled Position",
-            candidate_name: r.candidateName,
-            overall_score: r.overallScore,
-            skills_score: r.scores.skillsMatch,
-            experience_score: r.scores.experienceRelevance,
+          results.map(r => {
+            const anonId = Math.floor(1000 + Math.random() * 9000);
+            return {
+              job_title: jobTitle || "Untitled Position",
+              candidate_name: `${r.candidateName} #${anonId}`,
+              overall_score: r.overallScore,
+              skills_score: r.scores.skillsMatch,
+              experience_score: r.scores.experienceRelevance,
             education_score: r.scores.educationFit,
             keyword_score: r.scores.keywordAlignment,
             culture_score: r.scores.cultureFit,
