@@ -33,7 +33,7 @@ export async function middleware(request) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/analyze') || request.nextUrl.pathname.startsWith('/results')
+  const isProtectedRoute = request.nextUrl.pathname.startsWith('/analyze') || request.nextUrl.pathname.startsWith('/results') || request.nextUrl.pathname.startsWith('/history')
   const isAuthRoute = request.nextUrl.pathname.startsWith('/sign-in') || request.nextUrl.pathname.startsWith('/sign-up')
 
   if (isProtectedRoute && !user) {

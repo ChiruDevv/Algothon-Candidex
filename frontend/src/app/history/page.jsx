@@ -14,6 +14,9 @@ export default function HistoryPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setToken(session?.access_token)
       setIsLoaded(true)
+      if (!session) {
+        window.location.href = '/sign-in'
+      }
     })
   }, [supabase.auth])
   const [results, setResults] = useState(null)
