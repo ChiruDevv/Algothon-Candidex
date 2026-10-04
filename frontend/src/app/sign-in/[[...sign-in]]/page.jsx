@@ -2,7 +2,7 @@
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { createClient } from '@/utils/supabase/client'
-
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -39,9 +39,15 @@ export default function SignIn() {
             },
           }}
           providers={[]}
+          showLinks={false}
           redirectTo="https://candidex-algothon.vercel.app/update-password"
           view="sign_in"
         />
+        <div style={{ marginTop: '24px', textAlign: 'center' }}>
+          <Link href="/sign-up" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '14px' }}>
+            Don't have an account? <span style={{ color: '#00d4aa' }}>Sign up</span>
+          </Link>
+        </div>
       </div>
     </div>
   )
