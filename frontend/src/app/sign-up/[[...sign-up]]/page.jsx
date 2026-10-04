@@ -3,8 +3,21 @@ import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { createClient } from '@/utils/supabase/client'
 
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
 export default function SignUp() {
   const supabase = createClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        router.push('/analyze')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [supabase.auth, router])
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 80px)', paddingTop: '80px' }}>
