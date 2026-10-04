@@ -261,7 +261,7 @@ export default function AnalyzePage() {
         <div className="container">
           <div className="analyze-header">
             <h1>
-              <span style={{ background: 'var(--gradient-hero)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ color: 'var(--text-primary)' }}>
                 Analyze Candidates
               </span>
             </h1>

@@ -172,7 +172,7 @@ export default function HistoryPage() {
         <div className="results-header">
           <div className="results-header-left">
             <h1>
-              <span style={{ background: 'var(--gradient-hero)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ color: 'var(--text-primary)' }}>
                 Analysis History
               </span>
             </h1>
