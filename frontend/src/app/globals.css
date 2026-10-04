@@ -1378,7 +1378,8 @@ body {
 .loading-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 26, 0.9);
+  background: var(--bg-primary);
+  opacity: 0.95;
   backdrop-filter: blur(10px);
   z-index: 300;
   display: flex;
