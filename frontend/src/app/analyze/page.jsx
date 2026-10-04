@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 import * as pdfjsLib from 'pdfjs-dist'
 import mammoth from 'mammoth'
 
@@ -11,6 +12,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 export default function AnalyzePage() {
   const router = useRouter()
+  const { user } = useUser()
   const fileInputRef = useRef(null)
   const [activeTab, setActiveTab] = useState('upload') // 'upload' or 'paste'
   const [pastedText, setPastedText] = useState('')
@@ -195,6 +197,7 @@ export default function AnalyzePage() {
           })),
           jobDescription,
           jobTitle: jobTitle || 'Untitled Position',
+          userId: user?.id || 'anonymous'
         }),
       })
 

@@ -82,6 +82,7 @@ const analyzeSchema = z.object({
   ).min(1, "At least one resume is required.").max(50, "Maximum 50 resumes at once."),
   jobDescription: z.string().min(50, "Job description must be at least 50 characters.").max(20000),
   jobTitle: z.string().min(1).max(200).optional(),
+  userId: z.string().optional(),
 });
 
 const singleAnalyzeSchema = z.object({
@@ -185,7 +186,7 @@ IMPORTANT INSTRUCTIONS:
 app.post("/api/analyze", aiLimiter, async (req, res) => {
   try {
     const validated = analyzeSchema.parse(req.body);
-    const { resumes, jobDescription, jobTitle } = validated;
+    const { resumes, jobDescription, jobTitle, userId } = validated;
 
     const results = [];
     const errors = [];
@@ -230,9 +231,10 @@ app.post("/api/analyze", aiLimiter, async (req, res) => {
     // Sort by overall score descending
     results.sort((a, b) => b.overallScore - a.overallScore);
 
-    // Assign ranks
+    // Assign ranks and userId
     results.forEach((r, idx) => {
       r.rank = idx + 1;
+      r.userId = userId || 'anonymous';
     });
 
     // Save to Supabase if configured
@@ -360,11 +362,23 @@ app.post("/api/scrape-job", aiLimiter, async (req, res) => {
 app.get("/api/history", async (req, res) => {
   try {
     if (!supabase) throw new Error("Supabase is not configured");
-    const { data, error } = await supabase
+    const { userId } = req.query;
+    
+    let query = supabase
       .from('candidates')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(50);
+      
+    if (userId) {
+      query = query.eq('analysis_data->>userId', userId);
+    } else {
+      // If no user provided, maybe we shouldn't return everyone's data. 
+      // For now, return empty to prevent data leaks.
+      return res.json({ success: true, history: [] });
+    }
+
+    const { data, error } = await query;
       
     if (error) throw error;
     res.json({ success: true, history: data });
