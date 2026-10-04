@@ -2,6 +2,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import * as pdfjsLib from 'pdfjs-dist'
+import mammoth from 'mammoth'
 
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`
@@ -11,6 +12,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 export default function AnalyzePage() {
   const router = useRouter()
   const fileInputRef = useRef(null)
+  const [activeTab, setActiveTab] = useState('upload') // 'upload' or 'paste'
+  const [pastedText, setPastedText] = useState('')
   const [files, setFiles] = useState([])
   const [jobTitle, setJobTitle] = useState('')
   const [jobDescription, setJobDescription] = useState('')
@@ -20,33 +23,39 @@ export default function AnalyzePage() {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [error, setError] = useState('')
 
-  // Extract text from PDF using pdfjs-dist
-  const extractTextFromPDF = async (file) => {
+  // Extract text from file (PDF or DOCX)
+  const extractTextFromFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer()
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-    let text = ''
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const content = await page.getTextContent()
-      text += content.items.map((item) => item.str).join(' ') + '\n'
+    
+    if (file.type === 'application/pdf') {
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      let text = ''
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i)
+        const content = await page.getTextContent()
+        text += content.items.map((item) => item.str).join(' ') + '\n'
+      }
+      return text.trim()
+    } else if (file.name.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const result = await mammoth.extractRawText({ arrayBuffer })
+      return result.value.trim()
     }
-
-    return text.trim()
+    
+    throw new Error('Unsupported file format')
   }
 
   // Handle file selection
   const handleFiles = useCallback(async (newFiles) => {
-    const pdfFiles = Array.from(newFiles).filter(
-      (f) => f.type === 'application/pdf'
+    const validFiles = Array.from(newFiles).filter(
+      (f) => f.type === 'application/pdf' || f.name.endsWith('.docx') || f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
-    if (pdfFiles.length === 0) {
-      setError('Please upload PDF files only.')
+    if (validFiles.length === 0) {
+      setError('Please upload PDF or DOCX files only.')
       return
     }
 
-    if (files.length + pdfFiles.length > 50) {
+    if (files.length + validFiles.length > 50) {
       setError('Maximum 50 resumes allowed.')
       return
     }
@@ -54,9 +63,9 @@ export default function AnalyzePage() {
     setError('')
 
     const processed = await Promise.all(
-      pdfFiles.map(async (file) => {
+      validFiles.map(async (file) => {
         try {
-          const text = await extractTextFromPDF(file)
+          const text = await extractTextFromFile(file)
           return {
             id: crypto.randomUUID(),
             name: file.name,
@@ -66,14 +75,14 @@ export default function AnalyzePage() {
             error: text.length <= 50 ? 'Could not extract enough text' : null,
           }
         } catch (err) {
-          console.error("PDF Parsing Error:", err);
+          console.error("File Parsing Error:", err);
           return {
             id: crypto.randomUUID(),
             name: file.name,
             size: file.size,
             text: '',
             status: 'error',
-            error: 'Failed to parse PDF',
+            error: 'Failed to parse file',
           }
         }
       })
@@ -81,6 +90,28 @@ export default function AnalyzePage() {
 
     setFiles((prev) => [...prev, ...processed])
   }, [files.length])
+
+  // Handle Paste
+  const handlePasteSubmit = () => {
+    if (pastedText.length < 50) {
+      setError('Pasted text is too short. Please paste a full resume.');
+      return;
+    }
+    setError('');
+    
+    const newFile = {
+      id: crypto.randomUUID(),
+      name: `Pasted Resume ${files.length + 1}.txt`,
+      size: new Blob([pastedText]).size,
+      text: pastedText.trim(),
+      status: 'ready',
+      error: null
+    };
+
+    setFiles(prev => [...prev, newFile]);
+    setPastedText(''); // Clear textarea
+    setActiveTab('upload'); // Switch back to see the file
+  }
 
   // Drag and drop handlers
   const handleDragOver = (e) => {
@@ -222,59 +253,97 @@ export default function AnalyzePage() {
             {/* Left Column - Upload */}
             <div>
               <div className="card" style={{ marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  📄 Upload Resumes
-                  {readyCount > 0 && (
-                    <span style={{
-                      padding: '2px 10px',
-                      background: 'rgba(0, 212, 170, 0.15)',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: '0.75rem',
-                      color: 'var(--accent-secondary)',
-                      fontWeight: 600,
-                    }}>
-                      {readyCount} ready
-                    </span>
-                  )}
-                  {errorCount > 0 && (
-                    <span style={{
-                      padding: '2px 10px',
-                      background: 'rgba(255, 107, 157, 0.15)',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: '0.75rem',
-                      color: 'var(--accent-tertiary)',
-                      fontWeight: 600,
-                    }}>
-                      {errorCount} failed
-                    </span>
-                  )}
-                </h3>
-
-                <div
-                  className={`upload-zone ${isDragging ? 'drag-active' : ''}`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf"
-                    multiple
-                    style={{ display: 'none' }}
-                    onChange={(e) => handleFiles(e.target.files)}
-                  />
-                  <div className="upload-zone-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17,8 12,3 7,8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    📄 Add Resumes
+                    {readyCount > 0 && (
+                      <span style={{
+                        padding: '2px 10px',
+                        background: 'rgba(0, 212, 170, 0.15)',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.75rem',
+                        color: 'var(--accent-secondary)',
+                        fontWeight: 600,
+                      }}>
+                        {readyCount} ready
+                      </span>
+                    )}
+                    {errorCount > 0 && (
+                      <span style={{
+                        padding: '2px 10px',
+                        background: 'rgba(255, 107, 157, 0.15)',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.75rem',
+                        color: 'var(--accent-tertiary)',
+                        fontWeight: 600,
+                      }}>
+                        {errorCount} failed
+                      </span>
+                    )}
+                  </h3>
+                  
+                  <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-secondary)', padding: '4px', borderRadius: 'var(--radius-md)' }}>
+                    <button 
+                      className={`btn btn-sm ${activeTab === 'upload' ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ minWidth: '80px', fontSize: '0.75rem', padding: '4px 12px', height: 'auto' }}
+                      onClick={() => setActiveTab('upload')}
+                    >
+                      Upload
+                    </button>
+                    <button 
+                      className={`btn btn-sm ${activeTab === 'paste' ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ minWidth: '80px', fontSize: '0.75rem', padding: '4px 12px', height: 'auto' }}
+                      onClick={() => setActiveTab('paste')}
+                    >
+                      Paste Text
+                    </button>
                   </div>
-                  <h3>Drop PDF resumes here</h3>
-                  <p>or click to browse • Max 50 files • PDF only</p>
                 </div>
+
+                {activeTab === 'upload' ? (
+                  <div
+                    className={`upload-zone ${isDragging ? 'drag-active' : ''}`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      multiple
+                      style={{ display: 'none' }}
+                      onChange={(e) => handleFiles(e.target.files)}
+                    />
+                    <div className="upload-zone-icon">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17,8 12,3 7,8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                    </div>
+                    <h3>Drop PDF or DOCX resumes here</h3>
+                    <p>or click to browse • Max 50 files</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <textarea
+                      className="jd-textarea"
+                      placeholder="Paste plain text of a resume here..."
+                      value={pastedText}
+                      onChange={(e) => setPastedText(e.target.value)}
+                      style={{ minHeight: '150px' }}
+                    />
+                    <button 
+                      className="btn btn-secondary btn-sm"
+                      onClick={handlePasteSubmit}
+                      disabled={pastedText.length < 50}
+                    >
+                      + Add to Analysis
+                    </button>
+                  </div>
+                )}
 
                 {files.length > 0 && (
                   <div className="upload-file-list">
