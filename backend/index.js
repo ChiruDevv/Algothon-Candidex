@@ -227,7 +227,7 @@ app.post("/api/analyze", aiLimiter, requireAuth(), async (req, res) => {
   try {
     const validated = analyzeSchema.parse(req.body);
     const { resumes, jobDescription, jobTitle } = validated;
-    const { userId } = getAuth(req);
+    const { userId } = req.auth || {};
 
     const results = [];
     const errors = [];
