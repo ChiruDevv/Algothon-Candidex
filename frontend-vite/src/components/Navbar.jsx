@@ -1,14 +1,12 @@
-"use client";
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { Link, useLocation } from 'react-router-dom'
 
 export default function Navbar() {
-  const pathname = usePathname()
+  const location = useLocation()
 
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link href="/" className="navbar-logo">
+        <Link to="/" className="navbar-logo">
           <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -25,26 +23,26 @@ export default function Navbar() {
         </Link>
 
         <div className="navbar-links">
-          <Link href="/" style={pathname === '/' ? { color: 'var(--text-primary)' } : {}}>
+          <Link to="/" style={location.pathname === '/' ? { color: 'var(--text-primary)' } : {}}>
             Home
           </Link>
           
           <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)', margin: '0 8px' }}></div>
           
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>For Recruiters</span>
-          <Link href="/analyze" style={pathname === '/analyze' ? { color: 'var(--text-primary)' } : {}}>
+          <Link to="/analyze" style={location.pathname === '/analyze' ? { color: 'var(--text-primary)' } : {}}>
             Analyze
           </Link>
 
           <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)', margin: '0 8px' }}></div>
           
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>For Candidates</span>
-          <Link href="/candidate" style={pathname.startsWith('/candidate') ? { color: 'var(--text-primary)' } : {}}>
+          <Link to="/candidate" style={location.pathname.startsWith('/candidate') ? { color: 'var(--text-primary)' } : {}}>
             Portal
           </Link>
 
-          {pathname === '/' && (
-            <Link href="/analyze" className="nav-btn-primary" style={{ marginLeft: '12px' }}>
+          {location.pathname === '/' && (
+            <Link to="/analyze" className="nav-btn-primary" style={{ marginLeft: '12px' }}>
               Get Started →
             </Link>
           )}
