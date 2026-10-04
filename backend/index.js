@@ -403,7 +403,7 @@ app.post("/api/scrape-job", aiLimiter, async (req, res) => {
 app.get("/api/history", requireAuth(), async (req, res) => {
   try {
     if (!supabase) throw new Error("Supabase is not configured");
-    const { userId } = getAuth(req);
+    const { userId } = req.auth || {};
     
     let query = supabase
       .from('candidates')
