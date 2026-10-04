@@ -26,7 +26,7 @@ export default function LandingPage() {
       icon: '📄',
       iconClass: 'purple',
       title: 'Multi-Resume Upload',
-      desc: 'Upload up to 50 resumes at once in PDF format. Our client-side parser extracts text instantly with zero server exposure.',
+      desc: 'Upload up to 50 resumes at once in PDF, DOCX, or raw text format. Our client-side parser extracts text instantly with zero server exposure.',
     },
     {
       icon: '🎯',
@@ -108,7 +108,7 @@ export default function LandingPage() {
 
           <div className="hero-stats">
             <div className="hero-stat">
-              <div className="hero-stat-value">Up to 50</div>
+              <div className="hero-stat-value">50</div>
               <div className="hero-stat-label">Resumes at Once</div>
             </div>
             <div className="hero-stat">
