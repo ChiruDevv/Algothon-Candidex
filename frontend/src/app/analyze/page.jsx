@@ -411,7 +411,7 @@ export default function AnalyzePage() {
             <div>
               <div className="card">
                 <div className="jd-input-container">
-                  <label>🔗 Auto-Fetch Job Details (Optional)</label>
+                  <label>🔗 Auto-Fetch Job Details From Linkedin(Optional)</label>
                   <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                     <input
                       type="url"
