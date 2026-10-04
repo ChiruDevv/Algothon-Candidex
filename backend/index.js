@@ -56,6 +56,23 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Debug DB
+app.get("/api/test-db", async (req, res) => {
+  try {
+    if (!supabase) return res.json({ error: "Supabase client is null" });
+    const { data, error } = await supabase.from('candidates').select('id').limit(1);
+    const { data: insertData, error: insertError } = await supabase.from('candidates').insert([{ job_title: 'Test Debug' }]).select();
+    res.json({ 
+      selectError: error, 
+      insertError: insertError, 
+      url: process.env.SUPABASE_URL ? "Configured" : "Missing",
+      hasKey: (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY) ? "Yes" : "No"
+    });
+  } catch (err) {
+    res.json({ exception: err.message });
+  }
+});
+
 // Global Rate Limiter
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
