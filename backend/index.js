@@ -93,7 +93,10 @@ const singleAnalyzeSchema = z.object({
 async function analyzeResumeWithAI(resumeText, jobDescription, candidateName) {
   const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
-  const prompt = `You are an expert AI recruiter and resume analyst. Analyze this resume against the given job description with extreme precision.
+  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const prompt = `You are an expert AI recruiter and resume analyst. Analyze this resume against the given job description with extreme precision. 
+Note: The current date is ${currentDate}. Do NOT flag dates before or up to this date as being in the "future".
 
 <job_description>
 ${jobDescription}
