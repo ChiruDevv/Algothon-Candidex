@@ -91,7 +91,7 @@ const singleAnalyzeSchema = z.object({
 // ===== GEMINI AI ANALYSIS =====
 
 async function analyzeResumeWithAI(resumeText, jobDescription, candidateName) {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
   const prompt = `You are an expert AI recruiter and resume analyst. Analyze this resume against the given job description with extreme precision.
 
@@ -327,7 +327,7 @@ const coverLetterSchema = z.object({
 app.post("/api/candidate/star-rewrite", aiLimiter, async (req, res) => {
   try {
     const { bulletPoint, jobDescription } = starRewriteSchema.parse(req.body);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     
     const prompt = `You are an expert resume writer. Rewrite the following resume bullet point using the STAR (Situation, Task, Action, Result) method. Make it highly impactful, action-oriented, and metric-driven.
     
@@ -354,7 +354,7 @@ app.post("/api/candidate/star-rewrite", aiLimiter, async (req, res) => {
 app.post("/api/candidate/cover-letter", aiLimiter, async (req, res) => {
   try {
     const { resumeText, jobDescription } = coverLetterSchema.parse(req.body);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     
     const prompt = `You are an expert career coach and copywriter. Write a highly persuasive, professional, and tailored cover letter based on the candidate's resume and the target job description.
 
