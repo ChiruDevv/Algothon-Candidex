@@ -1,12 +1,12 @@
 "use client";
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { useUser } from '@clerk/nextjs'
+import { useAuth } from '@clerk/nextjs'
 import CandidateDetail from '@/components/CandidateDetail'
 import RadarChart from '@/components/RadarChart'
 
 export default function HistoryPage() {
-  const { user, isLoaded } = useUser()
+  const { isLoaded, getToken } = useAuth()
   const [results, setResults] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterLevel, setFilterLevel] = useState('all')
@@ -19,11 +19,16 @@ export default function HistoryPage() {
 
   useEffect(() => {
     async function fetchHistory() {
-      if (!isLoaded || !user) return; // Wait for clerk to load
+      if (!isLoaded) return; // Wait for clerk to load
       
       try {
+        const token = await getToken();
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiUrl}/api/history?userId=${user.id}`);
+        const res = await fetch(`${apiUrl}/api/history`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!res.ok) throw new Error('Failed to fetch history');
         const data = await res.json();
         
@@ -54,7 +59,7 @@ export default function HistoryPage() {
       }
     }
     fetchHistory();
-  }, [isLoaded, user]);
+  }, [isLoaded]);
 
   const getScoreLevel = (score) => {
     if (score >= 75) return 'high'

@@ -9,6 +9,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require("./supabase");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { clerkMiddleware, requireAuth } = require('@clerk/express');
 
 dotenv.config();
 
@@ -40,6 +41,9 @@ app.use(
 // Body parsing
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Clerk Middleware
+app.use(clerkMiddleware());
 
 // Health check
 app.get("/health", (_req, res) => {
@@ -183,10 +187,11 @@ IMPORTANT INSTRUCTIONS:
 // ===== ROUTES =====
 
 // POST /api/analyze - Batch analyze multiple resumes against a JD
-app.post("/api/analyze", aiLimiter, async (req, res) => {
+app.post("/api/analyze", aiLimiter, requireAuth(), async (req, res) => {
   try {
     const validated = analyzeSchema.parse(req.body);
-    const { resumes, jobDescription, jobTitle, userId } = validated;
+    const { resumes, jobDescription, jobTitle } = validated;
+    const userId = req.auth.userId;
 
     const results = [];
     const errors = [];
@@ -359,10 +364,10 @@ app.post("/api/scrape-job", aiLimiter, async (req, res) => {
 });
 
 // GET /api/history - Fetch past analysis results
-app.get("/api/history", async (req, res) => {
+app.get("/api/history", requireAuth(), async (req, res) => {
   try {
     if (!supabase) throw new Error("Supabase is not configured");
-    const { userId } = req.query;
+    const userId = req.auth.userId;
     
     let query = supabase
       .from('candidates')
