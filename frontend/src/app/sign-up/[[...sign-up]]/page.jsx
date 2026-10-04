@@ -13,7 +13,7 @@ export default function SignUp() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        window.location.href = '/analyze'
+        window.location.href = '/'
       }
     })
     return () => subscription.unsubscribe()
@@ -39,7 +39,7 @@ export default function SignUp() {
             },
           }}
           providers={[]}
-          redirectTo={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/analyze`}
+          redirectTo={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/`}
           view="sign_up"
         />
       </div>
