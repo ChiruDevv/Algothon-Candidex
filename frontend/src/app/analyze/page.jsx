@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+import { createClient } from '@/utils/supabase/client'
 import * as pdfjsLib from 'pdfjs-dist'
 import mammoth from 'mammoth'
 
@@ -12,7 +12,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 export default function AnalyzePage() {
   const router = useRouter()
-  const { getToken } = useAuth()
+  const supabase = createClient()
   const fileInputRef = useRef(null)
   const [activeTab, setActiveTab] = useState('upload') // 'upload' or 'paste'
   const [pastedText, setPastedText] = useState('')
@@ -186,7 +186,8 @@ export default function AnalyzePage() {
       setLoadingMessage(`Analyzing ${readyFiles.length} resume${readyFiles.length > 1 ? 's' : ''} with AI...`)
       setLoadingProgress(30)
 
-      const token = await getToken();
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token;
 
       const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',

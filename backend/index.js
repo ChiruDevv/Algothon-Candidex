@@ -9,7 +9,24 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require("./supabase");
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { clerkMiddleware, requireAuth, getAuth } = require('@clerk/express');
+// Supabase Auth Middleware
+const requireAuth = () => async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Unauthorized: No token provided' });
+
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    }
+
+    req.auth = { userId: user.id };
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
 dotenv.config();
 
@@ -48,8 +65,7 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Clerk Middleware
-app.use(clerkMiddleware());
+// Supabase handles auth per-route via requireAuth
 
 // Health check
 app.get("/health", (_req, res) => {

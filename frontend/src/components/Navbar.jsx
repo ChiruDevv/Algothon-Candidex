@@ -1,9 +1,10 @@
 "use client";
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { SignInButton, UserButton, useAuth } from '@clerk/nextjs'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import { useRouter } from 'next/navigation'
 
 function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -37,7 +38,30 @@ function ThemeToggle() {
 
 export default function Navbar() {
   const pathname = usePathname()
-  const { isLoaded, isSignedIn } = useAuth()
+  const router = useRouter()
+  const [user, setUser] = useState(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
 
   return (
     <nav className="navbar">
@@ -73,26 +97,12 @@ export default function Navbar() {
             History
           </Link>
 
-
-
           <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '12px', minHeight: '32px' }}>
             <ThemeToggle />
-            {isLoaded && !isSignedIn && (
-              <SignInButton mode="modal">
-                <button className="nav-btn-primary">Sign In</button>
-              </SignInButton>
-            )}
-            {isLoaded && isSignedIn && (
-              <UserButton 
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: {
-                      width: '32px',
-                      height: '32px'
-                    }
-                  }
-                }}
-              />
+            {!user ? (
+              <Link href="/sign-in" className="nav-btn-primary" style={{ textDecoration: 'none' }}>Sign In</Link>
+            ) : (
+              <button onClick={handleSignOut} className="nav-btn-secondary">Sign Out</button>
             )}
           </div>
         </div>
