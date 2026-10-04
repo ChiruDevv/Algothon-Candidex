@@ -12,38 +12,15 @@ export default function ResultsPage() {
   const [selectedCandidate, setSelectedCandidate] = useState(null)
   const [compareMode, setCompareMode] = useState(false)
   const [compareList, setCompareList] = useState([])
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const stored = sessionStorage.getItem('analysisResults')
     if (stored) {
       setResults(JSON.parse(stored))
     }
   }, [])
-
-  // If no results, show empty state
-  if (!results || !results.candidates || results.candidates.length === 0) {
-    return (
-      <div className="results-page">
-        <div className="container">
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14,2 14,8 20,8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-              </svg>
-            </div>
-            <h3>No Analysis Results Yet</h3>
-            <p>Upload resumes and a job description to see AI-powered candidate rankings.</p>
-            <Link href="/analyze" className="btn btn-primary">
-              Start Analyzing →
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   const getScoreLevel = (score) => {
     if (score >= 75) return 'high'
@@ -64,6 +41,7 @@ export default function ResultsPage() {
 
   // Filter and sort candidates
   const filteredCandidates = useMemo(() => {
+    if (!results || !results.candidates) return []
     let list = [...results.candidates]
 
     // Search
@@ -96,7 +74,37 @@ export default function ResultsPage() {
     }
 
     return list
-  }, [results.candidates, searchQuery, filterLevel, sortBy])
+  }, [results, searchQuery, filterLevel, sortBy])
+
+  // Wait for client hydration to avoid mismatch
+  if (!mounted) {
+    return <div className="results-page"><div className="container" style={{ minHeight: '60vh' }}></div></div>
+  }
+
+  // If no results, show empty state
+  if (!results || !results.candidates || results.candidates.length === 0) {
+    return (
+      <div className="results-page">
+        <div className="container">
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14,2 14,8 20,8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </div>
+            <h3>No Analysis Results Yet</h3>
+            <p>Upload resumes and a job description to see AI-powered candidate rankings.</p>
+            <Link href="/analyze" className="btn btn-primary">
+              Start Analyzing →
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Stats
   const avgScore = Math.round(

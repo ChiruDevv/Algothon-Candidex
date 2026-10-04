@@ -6,6 +6,7 @@ const dotenv = require("dotenv");
 const rateLimit = require("express-rate-limit");
 const { z } = require("zod");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const supabase = require("./supabase");
 
 dotenv.config();
 
@@ -18,6 +19,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 // Security & logging
 app.use(helmet());
 app.use(morgan("dev"));
+
+// Health check route for cron-job.org
+app.get('/', (req, res) => {
+  res.status(200).send('Server is awake!');
+});
 
 // CORS
 app.use(
@@ -85,7 +91,7 @@ const singleAnalyzeSchema = z.object({
 // ===== GEMINI AI ANALYSIS =====
 
 async function analyzeResumeWithAI(resumeText, jobDescription, candidateName) {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
   const prompt = `You are an expert AI recruiter and resume analyst. Analyze this resume against the given job description with extreme precision.
 
@@ -206,6 +212,7 @@ app.post("/api/analyze", aiLimiter, async (req, res) => {
         if (result.status === "fulfilled") {
           results.push(result.value);
         } else {
+          console.error(`AI Analysis failed for ${batch[idx].name}:`, result.reason.message);
           errors.push({
             resumeId: batch[idx].id,
             fileName: batch[idx].name,
@@ -222,6 +229,29 @@ app.post("/api/analyze", aiLimiter, async (req, res) => {
     results.forEach((r, idx) => {
       r.rank = idx + 1;
     });
+
+    // Save to Supabase if configured
+    if (supabase && results.length > 0) {
+      try {
+        const { error: dbError } = await supabase.from('candidates').insert(
+          results.map(r => ({
+            job_title: jobTitle || "Untitled Position",
+            candidate_name: r.candidateName,
+            overall_score: r.overallScore,
+            skills_score: r.scores.skillsMatch,
+            experience_score: r.scores.experienceRelevance,
+            education_score: r.scores.educationFit,
+            keyword_score: r.scores.keywordAlignment,
+            culture_score: r.scores.cultureFit,
+            trust_score: r.claimVerification?.trustScore || 100,
+            analysis_data: r
+          }))
+        );
+        if (dbError) console.error("Supabase insert error:", dbError);
+      } catch (e) {
+        console.error("Failed to save to Supabase:", e);
+      }
+    }
 
     res.json({
       success: true,
@@ -297,7 +327,7 @@ const coverLetterSchema = z.object({
 app.post("/api/candidate/star-rewrite", aiLimiter, async (req, res) => {
   try {
     const { bulletPoint, jobDescription } = starRewriteSchema.parse(req.body);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     
     const prompt = `You are an expert resume writer. Rewrite the following resume bullet point using the STAR (Situation, Task, Action, Result) method. Make it highly impactful, action-oriented, and metric-driven.
     
@@ -324,7 +354,7 @@ app.post("/api/candidate/star-rewrite", aiLimiter, async (req, res) => {
 app.post("/api/candidate/cover-letter", aiLimiter, async (req, res) => {
   try {
     const { resumeText, jobDescription } = coverLetterSchema.parse(req.body);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     
     const prompt = `You are an expert career coach and copywriter. Write a highly persuasive, professional, and tailored cover letter based on the candidate's resume and the target job description.
 

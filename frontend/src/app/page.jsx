@@ -1,8 +1,10 @@
 "use client";
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 export default function LandingPage() {
+  const [mounted, setMounted] = useState(false)
+  
   // Generate random particles
   const particles = useMemo(() => {
     return Array.from({ length: 30 }, (_, i) => ({
@@ -13,6 +15,10 @@ export default function LandingPage() {
       delay: Math.random() * 10,
       color: ['#6c63ff', '#00d4aa', '#ff6b9d', '#4fc3f7'][Math.floor(Math.random() * 4)],
     }))
+  }, [])
+
+  useEffect(() => {
+    setMounted(true)
   }, [])
 
   const features = [
@@ -60,7 +66,7 @@ export default function LandingPage() {
       <section className="hero">
         <div className="hero-bg">
           <div className="hero-particles">
-            {particles.map((p) => (
+            {mounted && particles.map((p) => (
               <div
                 key={p.id}
                 className="particle"

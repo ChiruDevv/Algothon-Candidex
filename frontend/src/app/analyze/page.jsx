@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import * as pdfjsLib from 'pdfjs-dist'
 
 // Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
+pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -66,6 +66,7 @@ export default function AnalyzePage() {
             error: text.length <= 50 ? 'Could not extract enough text' : null,
           }
         } catch (err) {
+          console.error("PDF Parsing Error:", err);
           return {
             id: crypto.randomUUID(),
             name: file.name,
@@ -120,10 +121,10 @@ export default function AnalyzePage() {
     setLoadingProgress(10)
 
     try {
-      setLoadingMessage(\`Analyzing \${readyFiles.length} resume\${readyFiles.length > 1 ? 's' : ''} with AI...\`)
+      setLoadingMessage(`Analyzing ${readyFiles.length} resume${readyFiles.length > 1 ? 's' : ''} with AI...`)
       setLoadingProgress(30)
 
-      const response = await fetch(\`\${API_URL}/api/analyze\`, {
+      const response = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -146,6 +147,11 @@ export default function AnalyzePage() {
       }
 
       const data = await response.json()
+      
+      if (data.analyzed === 0 && data.errors && data.errors.length > 0) {
+        throw new Error(data.errors[0].error || 'Analysis failed for all resumes.')
+      }
+
       setLoadingProgress(100)
       setLoadingMessage('Done! Redirecting...')
 

@@ -1,4 +1,5 @@
-import '../app/globals.css'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import './globals.css'
 import Navbar from '@/components/Navbar'
 
 export const metadata = {
@@ -8,12 +9,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <Navbar />
-        <div className="page-content">
-          {children}
-        </div>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <Navbar />
+          <div className="page-content">
+            {children}
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )
