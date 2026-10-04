@@ -23,7 +23,6 @@ export default function SignUp() {
               },
             },
           }}
-          providers={['google']}
           redirectTo={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/analyze`}
           view="sign_up"
         />
