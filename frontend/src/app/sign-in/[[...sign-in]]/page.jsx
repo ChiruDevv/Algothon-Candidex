@@ -13,7 +13,7 @@ export default function SignIn() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        router.push('/analyze')
+        window.location.href = '/analyze'
       }
     })
     return () => subscription.unsubscribe()
