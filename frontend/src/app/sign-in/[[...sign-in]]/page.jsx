@@ -9,7 +9,6 @@ export default function SignIn() {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 80px)', paddingTop: '80px' }}>
       <div style={{ width: '100%', maxWidth: '400px', background: 'var(--bg-card)', padding: '32px', borderRadius: '12px', border: '1px solid var(--border-default)' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '24px', color: 'var(--text-primary)' }}>Sign In to Candidex</h2>
         <Auth
           supabaseClient={supabase}
           appearance={{
@@ -19,6 +18,9 @@ export default function SignIn() {
                 colors: {
                   brand: '#00d4aa',
                   brandAccent: '#0ea5e9',
+                  inputText: '#ffffff',
+                  inputLabelText: 'var(--text-secondary)',
+                  inputPlaceholder: 'var(--text-muted)'
                 },
               },
             },
