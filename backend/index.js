@@ -248,7 +248,8 @@ app.post("/api/analyze", aiLimiter, async (req, res) => {
             culture_score: r.scores.cultureFit,
             trust_score: r.claimVerification?.trustScore || 100,
             analysis_data: r
-          }))
+            };
+          })
         );
         if (dbError) console.error("Supabase insert error:", dbError);
       } catch (e) {
