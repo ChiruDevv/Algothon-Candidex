@@ -9,7 +9,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const supabase = require("./supabase");
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { clerkMiddleware, requireAuth } = require('@clerk/express');
+const { clerkMiddleware, requireAuth, getAuth } = require('@clerk/express');
 
 dotenv.config();
 
@@ -57,17 +57,9 @@ app.get("/health", (_req, res) => {
 });
 
 // Debug DB
-app.get("/api/test-db", async (req, res) => {
+app.get("/api/test-db", requireAuth(), async (req, res) => {
   try {
-    if (!supabase) return res.json({ error: "Supabase client is null" });
-    const { data, error } = await supabase.from('candidates').select('id').limit(1);
-    const { data: insertData, error: insertError } = await supabase.from('candidates').insert([{ job_title: 'Test Debug' }]).select();
-    res.json({ 
-      selectError: error, 
-      insertError: insertError, 
-      url: process.env.SUPABASE_URL ? "Configured" : "Missing",
-      hasKey: (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY) ? "Yes" : "No"
-    });
+    res.json({ auth: req.auth });
   } catch (err) {
     res.json({ exception: err.message });
   }
@@ -214,7 +206,7 @@ app.post("/api/analyze", aiLimiter, requireAuth(), async (req, res) => {
   try {
     const validated = analyzeSchema.parse(req.body);
     const { resumes, jobDescription, jobTitle } = validated;
-    const userId = req.auth.userId;
+    const { userId } = getAuth(req);
 
     const results = [];
     const errors = [];
@@ -390,7 +382,7 @@ app.post("/api/scrape-job", aiLimiter, async (req, res) => {
 app.get("/api/history", requireAuth(), async (req, res) => {
   try {
     if (!supabase) throw new Error("Supabase is not configured");
-    const userId = req.auth.userId;
+    const { userId } = getAuth(req);
     
     let query = supabase
       .from('candidates')
