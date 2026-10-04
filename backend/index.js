@@ -437,9 +437,8 @@ app.use((err, _req, res, _next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({
     error: "Internal Server Error",
-    message: process.env.NODE_ENV === "production"
-      ? "Something went wrong."
-      : err.message,
+    message: err.message || "Something went wrong.",
+    stack: err.stack,
   });
 });
 
