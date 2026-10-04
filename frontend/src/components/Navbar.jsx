@@ -55,7 +55,7 @@ export default function Navbar() {
             <circle cx="24" cy="20" r="5" stroke="url(#logoGrad)" strokeWidth="2" />
             <path d="M27.5 23.5L30 26" stroke="url(#logoGrad)" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span className="logo-text-gradient">HirePilot AI</span>
+          <span className="logo-text-gradient">Candidex</span>
         </Link>
 
         <div className="navbar-links">

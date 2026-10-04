@@ -3,7 +3,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 
 export const metadata = {
-  title: 'HirePilot AI',
+  title: 'Candidex',
   description: 'AI Resume & Job Matching System',
 }
 

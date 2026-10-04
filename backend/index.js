@@ -419,5 +419,5 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 HirePilot AI Backend running on port ${PORT}`);
+  console.log(`🚀 Candidex Backend running on port ${PORT}`);
 });
