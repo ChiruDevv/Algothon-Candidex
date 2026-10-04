@@ -1105,7 +1105,7 @@ body {
 
 .score-bar {
   height: 6px;
-  background: var(--bg-tertiary);
+  background: var(--border-subtle);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
