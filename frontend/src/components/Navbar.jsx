@@ -73,12 +73,7 @@ export default function Navbar() {
             History
           </Link>
 
-          <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)', margin: '0 8px' }}></div>
-          
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>For Candidates</span>
-          <Link href="/candidate" style={pathname.startsWith('/candidate') ? { color: 'var(--text-primary)' } : {}}>
-            Portal
-          </Link>
+
 
           <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '12px', minHeight: '32px' }}>
             <ThemeToggle />
